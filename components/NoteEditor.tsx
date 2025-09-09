@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import type { Note } from '../types';
 
 declare const marked: {
@@ -11,10 +11,18 @@ declare const DOMPurify: {
 interface NoteEditorProps {
   activeNote: Note | null;
   onUpdateNote: (updatedNote: Partial<Note> & { id: string }) => void;
+  isSidebarCollapsed: boolean;
+  onToggleSidebar: () => void;
 }
 
-const NoteEditor: React.FC<NoteEditorProps> = ({ activeNote, onUpdateNote }) => {
-  const [view, setView] = useState<'write' | 'preview'>('write');
+const MenuIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+    </svg>
+);
+
+
+const NoteEditor: React.FC<NoteEditorProps> = ({ activeNote, onUpdateNote, isSidebarCollapsed, onToggleSidebar }) => {
   
   const renderedMarkdown = useMemo(() => {
     if (!activeNote?.content) return '';
@@ -24,7 +32,16 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ activeNote, onUpdateNote }) => 
 
   if (!activeNote) {
     return (
-      <div className="w-full h-full flex items-center justify-center bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-400">
+      <div className="w-full h-full flex items-center justify-center bg-white text-gray-500 relative">
+        {isSidebarCollapsed && (
+            <button
+                onClick={onToggleSidebar}
+                className="absolute top-4 left-4 p-2 text-gray-500 bg-gray-100 rounded-md hover:bg-gray-200"
+                aria-label="Open sidebar"
+            >
+                <MenuIcon className="w-6 h-6" />
+            </button>
+        )}
         <div className="text-center">
             <h2 className="text-2xl font-semibold">Select a note</h2>
             <p>Or create a new one to start writing.</p>
@@ -41,47 +58,47 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ activeNote, onUpdateNote }) => 
     onUpdateNote({ id: activeNote.id, content: e.target.value });
   };
 
-  const baseTabClass = 'px-4 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 rounded-t-md';
-  const activeTabClass = 'bg-white dark:bg-gray-900 text-blue-600 dark:text-blue-400';
-  const inactiveTabClass = 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 bg-gray-100 dark:bg-gray-800';
-
   return (
-    <main className="w-full h-2/3 md:h-screen flex flex-col bg-white dark:bg-gray-900">
-      <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+    <div className="w-full h-full flex flex-col bg-white">
+      <div className="p-4 border-b border-gray-200 flex items-center gap-4">
+        {isSidebarCollapsed && (
+            <button 
+                onClick={onToggleSidebar}
+                className="p-2 text-gray-500 bg-gray-100 rounded-md hover:bg-gray-200"
+                aria-label="Open sidebar"
+            >
+                <MenuIcon className="w-6 h-6" />
+            </button>
+        )}
         <input
           type="text"
           value={activeNote.title}
           onChange={handleTitleChange}
           placeholder="Note Title"
-          className="w-full text-2xl font-bold p-2 focus:outline-none bg-transparent dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
+          className="w-full text-2xl font-bold p-2 focus:outline-none bg-transparent placeholder-gray-400"
           aria-label="Note title"
         />
       </div>
-      <div className="px-4 pt-2 border-b border-gray-200 dark:border-gray-700 flex">
-          <button onClick={() => setView('write')} className={`${baseTabClass} ${view === 'write' ? activeTabClass : inactiveTabClass}`}>
-              Write
-          </button>
-          <button onClick={() => setView('preview')} className={`${baseTabClass} ${view === 'preview' ? activeTabClass : inactiveTabClass}`}>
-              Preview
-          </button>
+      <div className="flex-grow flex flex-col md:flex-row overflow-hidden">
+        <div className="w-full md:w-1/2 h-1/2 md:h-full flex flex-col border-b md:border-b-0 md:border-r border-gray-200">
+            <div className="p-2 text-sm font-semibold bg-gray-50 border-b border-gray-200 text-gray-600 text-center">Markdown</div>
+            <textarea
+                value={activeNote.content}
+                onChange={handleContentChange}
+                placeholder="Start writing... (Markdown supported!)"
+                className="w-full h-full text-base p-4 resize-none leading-relaxed focus:outline-none bg-transparent placeholder-gray-400 flex-grow"
+                aria-label="Note content"
+            />
+        </div>
+        <div className="w-full md:w-1/2 h-1/2 md:h-full flex flex-col">
+            <div className="p-2 text-sm font-semibold bg-gray-50 border-b border-gray-200 text-gray-600 text-center">Preview</div>
+            <div
+                className="markdown-preview flex-grow p-4 overflow-y-auto"
+                dangerouslySetInnerHTML={{ __html: renderedMarkdown }}
+            />
+        </div>
       </div>
-      <div className="flex-grow p-4 overflow-y-auto">
-        {view === 'write' ? (
-          <textarea
-            value={activeNote.content}
-            onChange={handleContentChange}
-            placeholder="Start writing... (Markdown supported!)"
-            className="w-full h-full text-base p-2 resize-none leading-relaxed focus:outline-none bg-transparent dark:text-gray-300 placeholder-gray-400 dark:placeholder-gray-500"
-            aria-label="Note content"
-          />
-        ) : (
-          <div
-            className="markdown-preview"
-            dangerouslySetInnerHTML={{ __html: renderedMarkdown }}
-          />
-        )}
-      </div>
-    </main>
+    </div>
   );
 };
 

@@ -2,14 +2,15 @@ import React, { useState, useMemo } from 'react';
 import NoteList from './components/NoteList';
 import NoteEditor from './components/NoteEditor';
 import useLocalStorage from './hooks/useLocalStorage';
-import useTheme from './hooks/useTheme';
 import type { Note } from './types';
 
 function App() {
   const [notes, setNotes] = useLocalStorage<Note[]>('notes-data', []);
   const [activeNoteId, setActiveNoteId] = useState<string | null>(null);
-  const [theme, toggleTheme] = useTheme();
   const [searchTerm, setSearchTerm] = useState('');
+  const [isSidebarCollapsed, setSidebarCollapsed] = useLocalStorage<boolean>('sidebar-collapsed', true);
+
+  const toggleSidebar = () => setSidebarCollapsed(prev => !prev);
 
   const handleAddNote = () => {
     const newNote: Note = {
@@ -20,6 +21,9 @@ function App() {
     };
     setNotes([newNote, ...notes]);
     setActiveNoteId(newNote.id);
+    if (isSidebarCollapsed) {
+        setSidebarCollapsed(false);
+    }
   };
 
   const handleDeleteNote = (idToDelete: string) => {
@@ -56,23 +60,29 @@ function App() {
   }, [notes, activeNoteId]);
 
   return (
-    <div className="flex flex-col md:flex-row h-screen font-sans bg-white dark:bg-gray-900">
-      <NoteList
-        notes={sortedNotes}
-        activeNoteId={activeNoteId}
-        onSelectNote={setActiveNoteId}
-        onAddNote={handleAddNote}
-        onDeleteNote={handleDeleteNote}
-        theme={theme}
-        toggleTheme={toggleTheme}
-        searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
-      />
-      <NoteEditor
-        key={activeNote?.id || 'empty'}
-        activeNote={activeNote}
-        onUpdateNote={handleUpdateNote}
-      />
+    <div className="flex h-screen font-sans bg-white text-gray-800">
+      <div className={`flex-shrink-0 h-full transition-all duration-300 ease-in-out ${isSidebarCollapsed ? 'w-0' : 'w-full md:w-80'}`}>
+          <NoteList
+            notes={sortedNotes}
+            activeNoteId={activeNoteId}
+            onSelectNote={setActiveNoteId}
+            onAddNote={handleAddNote}
+            onDeleteNote={handleDeleteNote}
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            isCollapsed={isSidebarCollapsed}
+            onToggleCollapse={toggleSidebar}
+          />
+      </div>
+      <main className="flex-grow h-full flex flex-col w-full">
+        <NoteEditor
+          key={activeNote?.id || 'empty'}
+          activeNote={activeNote}
+          onUpdateNote={handleUpdateNote}
+          isSidebarCollapsed={isSidebarCollapsed}
+          onToggleSidebar={toggleSidebar}
+        />
+      </main>
     </div>
   );
 }
