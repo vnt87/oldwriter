@@ -9,6 +9,7 @@ function App() {
   const [notes, setNotes] = useLocalStorage<Note[]>('notes-data', []);
   const [activeNoteId, setActiveNoteId] = useState<string | null>(null);
   const [theme, toggleTheme] = useTheme();
+  const [searchTerm, setSearchTerm] = useState('');
 
   const handleAddNote = () => {
     const newNote: Note = {
@@ -40,8 +41,15 @@ function App() {
   };
 
   const sortedNotes = useMemo(() => {
-      return [...notes].sort((a, b) => b.lastModified - a.lastModified);
-  }, [notes]);
+    const sorted = [...notes].sort((a, b) => b.lastModified - a.lastModified);
+    if (!searchTerm.trim()) {
+      return sorted;
+    }
+    return sorted.filter(note =>
+      note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      note.content.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [notes, searchTerm]);
 
   const activeNote = useMemo(() => {
       return notes.find((note) => note.id === activeNoteId) || null;
@@ -57,6 +65,8 @@ function App() {
         onDeleteNote={handleDeleteNote}
         theme={theme}
         toggleTheme={toggleTheme}
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
       />
       <NoteEditor
         key={activeNote?.id || 'empty'}
