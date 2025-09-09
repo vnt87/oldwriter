@@ -57,7 +57,7 @@ const NoteItem: React.FC<{
       className={`p-4 cursor-pointer border-b border-gray-200 dark:border-gray-700 group ${isActive ? 'bg-blue-100 dark:bg-blue-900/50' : 'hover:bg-gray-100 dark:hover:bg-gray-700'}`}
     >
       <div className="flex justify-between items-start">
-        <div className="flex-grow">
+        <div className="flex-grow min-w-0">
           <h3 className="font-bold text-gray-800 dark:text-gray-100 truncate">{note.title || 'Untitled Note'}</h3>
           <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{noteSnippet || 'No content'}</p>
         </div>
